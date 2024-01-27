@@ -47,6 +47,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         private string _pcReleaseLocation;
         private string _pcReleaseLanguage;
         private string _gameDataLocation;
+        private string _luaEngineLocation;
         private bool _isEGSVersion;
         private List<string> LuaScriptPaths = new List<string>();
         private bool _overrideGameDataFound = false;
@@ -74,6 +75,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         public Xceed.Wpf.Toolkit.WizardPage PageIsoSelection { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageEosInstall { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageEosConfig { get; internal set; }
+        public Xceed.Wpf.Toolkit.WizardPage PageLuaEngineInstall { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageLuaBackendInstall { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageRegion { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PCLaunchOption { get; internal set; }
@@ -358,6 +360,41 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         public RelayCommand ExtractGameDataCommand { get; set; }
         public float ExtractionProgress { get; set; }
         public int RegionId { get; set; }
+        public RelayCommand SelectLuaEngineLocationCommand { get; }
+        public string LuaEngineLocation
+        {
+            get => _luaEngineLocation;
+            set
+            {
+                _luaEngineLocation = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LuaEngineFoundVisibility));
+                OnPropertyChanged(nameof(LuaEngineNotFoundVisibility));
+            }
+        }
+        public bool IsLuaEngineInstalled
+        {
+            get
+            {
+                if (File.Exists(Path.Combine(ConfigurationService.LuaEngineLocation, "LuaEngine-REBORN.exe")))
+                {
+                    if ("v" + FileVersionInfo.GetVersionInfo(Path.Combine(ConfigurationService.LuaEngineLocation, "LuaEngine-REBORN.exe")).ProductVersion == MainViewModel.releases.TagName)
+                    {
+                        return ConfigurationService.LuaEngineInstalled = true;
+                    }
+                    else
+                        return ConfigurationService.LuaEngineInstalled = false;
+                }
+                else
+                    return ConfigurationService.LuaEngineInstalled = false;
+            }
+        }
+        public RelayCommand InstallLuaEngineCommand { get; set; }
+        public bool LuaEngineInstalled { get; set; }
+        public Visibility LuaEngineFoundVisibility => IsLuaEngineInstalled ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility LuaEngineNotFoundVisibility => IsLuaEngineInstalled ? Visibility.Collapsed : Visibility.Visible;
+        private string LuaEngineInstall => ConfigurationService.LuaEngineLocation;
+
         public bool IsLuaBackendInstalled
         {
             get
@@ -570,6 +607,62 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                 OnPropertyChanged(nameof(PanaceaNotInstalledVisibility));
                 PanaceaInstalled = false;
             });
+            SelectLuaEngineLocationCommand = new RelayCommand(_ =>
+                FileDialog.OnFolder(path => LuaEngineLocation = path));
+            InstallLuaEngineCommand = new RelayCommand(installed =>
+            {
+                if (!Convert.ToBoolean(installed))
+                {
+                    var gitClient = new GitHubClient(new ProductHeaderValue("LuaEngine.exe"));
+                    var releases = gitClient.Repository.Release.GetLatest(owner: "TopazTK", name: "LuaEngine").Result;
+                    string DownPath = Path.GetTempPath() + "LuaEngine" + Path.GetExtension(releases.Assets[0].Name);
+                    if (!Directory.Exists(ConfigurationService.LuaEngineLocation))
+                        Directory.CreateDirectory(ConfigurationService.LuaEngineLocation);
+                    var _client = new WebClient();
+                    _client.DownloadFile(new System.Uri(releases.Assets[0].BrowserDownloadUrl), DownPath);
+                    try
+                    {
+                        using (ZipFile zip = new ZipFile(DownPath))
+                        {
+                            zip.ExtractAll(LuaEngineInstall, ExtractExistingFileAction.OverwriteSilently);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(
+                                $"Unable to extract \"{Path.GetFileName(DownPath)}\" as it is not a zip file. You may have to install it manually and extract it to the LuaEngine folder inside of OpenKH.",
+                                "Run error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        File.Delete(DownPath);
+                    }
+                    string config = File.ReadAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"));
+                    int index = config.IndexOf("script_paths:", config.IndexOf("- name: \"KINGDOM HEARTS II FINAL MIX\"")) + 15;
+                    File.WriteAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"),
+                        config.Insert(index, "      - \"" + Path.Combine(ConfigurationService.GameModPath, "kh2/scripts\"\r\n").Replace("\\", "/")));
+                    File.Delete(DownPath);
+                    ConfigurationService.LuaEngineInstalled = true;
+                    OnPropertyChanged(nameof(IsLuaEngineInstalled));
+                    OnPropertyChanged(nameof(LuaEngineFoundVisibility));
+                    OnPropertyChanged(nameof(LuaEngineNotFoundVisibility));
+                }
+                else
+                {
+                    if (File.Exists(Path.Combine(LuaEngineInstall, "gameFile.yml")))
+                    {
+                        string config = File.ReadAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"));
+                        if (!config.Contains("      - \"" + Path.Combine(ConfigurationService.GameModPath, "kh2/scripts\"\r\n").Replace("\\", "/")))
+                        {
+                            int index = config.IndexOf("script_paths:", config.IndexOf("- name: \"KINGDOM HEARTS II FINAL MIX\"")) + 15;
+                            File.WriteAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"),
+                            config.Insert(index, "      - \"" + Path.Combine(ConfigurationService.GameModPath, "kh2/scripts\"\r\n").Replace("\\", "/")));
+                        }
+                        ConfigurationService.LuaEngineInstalled = true;
+                        OnPropertyChanged(nameof(IsLuaEngineInstalled));
+                        OnPropertyChanged(nameof(LuaEngineFoundVisibility));
+                        OnPropertyChanged(nameof(LuaEngineNotFoundVisibility));
+                    }
+                }
+            });
+
             InstallLuaBackendCommand = new RelayCommand(installed =>
             {
                 if (!Convert.ToBoolean(installed))
