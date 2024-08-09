@@ -467,7 +467,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     ConfigPcReleaseLanguage = ConfigurationService.PcReleaseLanguage,
                     ConfigRegionId = ConfigurationService.RegionId,
                     ConfigPanaceaInstalled = ConfigurationService.PanaceaInstalled,
-                    ConfigIsEGSVersion = ConfigurationService.IsEGSVersion,
                     ConfigLuaEngineLocation = ConfigurationService.LuaEngineLocation,
                 };
                 if (dialog.ShowDialog() == true)
@@ -481,7 +480,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     ConfigurationService.PcReleaseLocationKH3D = dialog.ConfigPcReleaseLocationKH3D;
                     ConfigurationService.RegionId = dialog.ConfigRegionId;
                     ConfigurationService.PanaceaInstalled = dialog.ConfigPanaceaInstalled;
-                    ConfigurationService.IsEGSVersion = dialog.ConfigIsEGSVersion;
                     ConfigurationService.WizardVersionNumber = _wizardVersionNumber;
                     ConfigurationService.LuaEngineLocation = dialog.ConfigLuaEngineLocation;
 
@@ -634,7 +632,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     isPcsx2 = true;
                     break;
                 case 2:
-                    if (ConfigurationService.IsEGSVersion && !(_launchGame == "kh3d"))
+                    if (ConfigurationService.PCVersion == "EGS" && !(_launchGame == "kh3d"))
                     {
                         if (ConfigurationService.PcReleaseLocation != null)
                         {
@@ -657,6 +655,23 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                                 FileName = "com.epicgames.launcher://apps/4158b699dd70447a981fee752d970a3e%3A5aac304f0e8948268ddfd404334dbdc7%3A68c214c58f694ae88c2dab6f209b43e4?action=launch&silent=true",
                                 UseShellExecute = true,
                             };
+                            Process.Start(processStartInfo);
+                            CloseAllWindows();
+                            //if (ConfigurationService.LuaEngineInstalled)
+                            //{
+                            //    string startFile = ConfigurationService.LuaEngineLocation + "/LuaEngine-REBORN.exe";
+                            //    if (File.Exists(startFile))
+                            //    {
+                            //        processStartInfo = new ProcessStartInfo
+                            //        {
+                            //            FileName = startFile,
+                            //            WorkingDirectory = ConfigurationService.LuaEngineLocation,
+                            //            UseShellExecute = false,
+                            //        };
+                            //        Process.Start(processStartInfo);
+                            //    }
+                            //}
+                            return Task.CompletedTask;
                         }
                         else
                         {
@@ -667,7 +682,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                             return Task.CompletedTask;
                         }
                     }
-                    else if (ConfigurationService.IsEGSVersion && _launchGame == "kh3d")
+                    else if (ConfigurationService.PCVersion == "EGS" && _launchGame == "kh3d")
                     {
                         if (ConfigurationService.PcReleaseLocationKH3D != null)
                         {
@@ -695,6 +710,100 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                                 FileName = "com.epicgames.launcher://apps/c8ff067c1c984cd7ab1998e8a9afc8b6%3Aaa743b9f52e84930b0ba1b701951e927%3Ad1a8f7c478d4439b8c60a5808715dc05?action=launch&silent=true",
                                 UseShellExecute = true,
                             };
+                            Process.Start(processStartInfo);
+                            CloseAllWindows();
+                            return Task.CompletedTask;
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                           "Unable to locate KINGDOM HEARTS HD 2.8 Final Chapter Prologue install. Please re-run the setup wizard and confirm it is correct.",
+                           "Run error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            CloseAllWindows();
+                            return Task.CompletedTask;
+                        }
+                    }
+                    if (ConfigurationService.PCVersion == "Steam" && !(_launchGame == "kh3d"))
+                    {
+                        if (ConfigurationService.PcReleaseLocation != null)
+                        {
+                            if (ConfigurationService.PanaceaInstalled)
+                            {
+                                string panaceaSettings = Path.Combine(ConfigurationService.PcReleaseLocation, "panacea_settings.txt");
+                                if (!File.Exists(panaceaSettings))
+                                {
+                                    File.WriteAllLines(Path.Combine(ConfigurationService.PcReleaseLocation, "panacea_settings.txt"),
+                                    new string[]
+                                    {
+                                $"mod_path={ConfigurationService.GameModPath}",
+                                $"show_console={false}",
+                                    });
+                                }
+                                File.AppendAllText(panaceaSettings, "\nquick_launch=" + _launchGame);
+                            }
+                            processStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "steam://rungameid/2552430",
+                                UseShellExecute = true,
+                            };
+                            Process.Start(processStartInfo);
+                            CloseAllWindows();
+                            //if (ConfigurationService.LuaEngineInstalled)
+                            //{
+                            //    string startFile = ConfigurationService.LuaEngineLocation + "/LuaEngine-REBORN.exe";
+                            //    if (File.Exists(startFile))
+                            //    {
+                            //        processStartInfo = new ProcessStartInfo
+                            //        {
+                            //            FileName = startFile,
+                            //            WorkingDirectory = ConfigurationService.LuaEngineLocation,
+                            //            UseShellExecute = false,
+                            //        };
+                            //        Process.Start(processStartInfo);
+                            //    }
+                            //}
+                            return Task.CompletedTask;
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                           "Unable to locate KINGDOM HEARTS HD 1.5+2.5 ReMIX install. Please re-run the setup wizard and confirm it is correct.",
+                           "Run error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            CloseAllWindows();
+                            return Task.CompletedTask;
+                        }
+                    }
+                    else if (ConfigurationService.PCVersion == "Steam" && _launchGame == "kh3d")
+                    {
+                        if (ConfigurationService.PcReleaseLocationKH3D != null)
+                        {
+                            string panaceaSettings = Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "panacea_settings.txt");
+                            if (ConfigurationService.PanaceaInstalled)
+                            {
+                                if (!File.Exists(panaceaSettings))
+                                {
+                                    if (Directory.Exists(ConfigurationService.PcReleaseLocationKH3D))
+                                    {
+                                        File.WriteAllLines(Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "panacea_settings.txt"),
+                                        new string[]
+                                        {
+                                    $"mod_path={ConfigurationService.GameModPath}",
+                                    $"show_console={false}",
+                                        });
+                                    }
+                                    else
+                                        File.Create(panaceaSettings);
+                                }
+                                File.AppendAllText(panaceaSettings, "\nquick_launch=" + _launchGame);
+                            }
+                            processStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "steam://rungameid/2552440",
+                                UseShellExecute = true,
+                            };
+                            Process.Start(processStartInfo);
+                            CloseAllWindows();
+                            return Task.CompletedTask;
                         }
                         else
                         {
@@ -743,23 +852,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                             return Task.CompletedTask;
                         }
                     }
-                    Process.Start(processStartInfo);
-                    CloseAllWindows();
-                    if (ConfigurationService.LuaEngineInstalled)
-                    {
-                        string startFile = ConfigurationService.LuaEngineLocation + "/LuaEngine-REBORN.exe";
-                        if (File.Exists(startFile))
-                        {
-                            processStartInfo = new ProcessStartInfo
-                            {
-                                FileName = startFile,
-                                WorkingDirectory = ConfigurationService.LuaEngineLocation,
-                                UseShellExecute = false,
-                            };
-                            Process.Start(processStartInfo);
-                        }
-                    }
-                    return Task.CompletedTask;
                 default:
                     return Task.CompletedTask;
             }
@@ -949,12 +1041,12 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                         string _backupDir = null;
                         if (_launchGame != "kh3d" && ConfigurationService.PcReleaseLocation != null)
                         {
-                            _pkgName = Path.Combine(ConfigurationService.PcReleaseLocation, "Image", ConfigurationService.PcReleaseLanguage, _pkgSoft + ".pkg");
+                            _pkgName = Path.Combine(ConfigurationService.PcReleaseLocation, "Image", ConfigurationService.PCVersion == "Steam" && ConfigurationService.PcReleaseLanguage == "en" ? "dt" : ConfigurationService.PcReleaseLanguage, _pkgSoft + ".pkg");
                             _backupDir = Path.Combine(ConfigurationService.PcReleaseLocation, "BackupImage");
                         }
                         else if (ConfigurationService.PcReleaseLocationKH3D != null)
                         {
-                            _pkgName = Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "Image", ConfigurationService.PcReleaseLanguage, _pkgSoft + ".pkg");
+                            _pkgName = Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "Image", ConfigurationService.PCVersion == "Steam" && ConfigurationService.PcReleaseLanguage == "en" ? "dt" : ConfigurationService.PcReleaseLanguage, _pkgSoft + ".pkg");
                             _backupDir = Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "BackupImage");
                         }
                         else
@@ -1068,7 +1160,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                                 Log.Info($"Restoring Package File {file.Replace(".pkg", "")}");
 
                                 var _fileBare = Path.GetFileName(file);
-                                var _trueName = Path.Combine(ConfigurationService.PcReleaseLocation, "Image", ConfigurationService.PcReleaseLanguage, _fileBare);
+                                var _trueName = Path.Combine(ConfigurationService.PcReleaseLocation, "Image", ConfigurationService.PCVersion == "Steam" && ConfigurationService.PcReleaseLanguage == "en" ? "dt" : ConfigurationService.PcReleaseLanguage, _fileBare);
 
                                 File.Delete(Path.ChangeExtension(_trueName, "hed"));
                                 File.Delete(_trueName);
@@ -1092,7 +1184,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                                 Log.Info($"Restoring Package File {file.Replace(".pkg", "")}");
 
                                 var _fileBare = Path.GetFileName(file);
-                                var _trueName = Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "Image", ConfigurationService.PcReleaseLanguage, _fileBare);
+                                var _trueName = Path.Combine(ConfigurationService.PcReleaseLocationKH3D, "Image", ConfigurationService.PCVersion == "Steam" && ConfigurationService.PcReleaseLanguage == "en" ? "dt" : ConfigurationService.PcReleaseLanguage, _fileBare);
 
                                 File.Delete(Path.ChangeExtension(_trueName, "hed"));
                                 File.Delete(_trueName);
