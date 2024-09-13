@@ -92,9 +92,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         public Xceed.Wpf.Toolkit.WizardPage PageIsoSelection { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageEosInstall { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageSteamAPITrick { get; internal set; }
-        public Xceed.Wpf.Toolkit.WizardPage PageEosConfig { get; internal set; }
-        public Xceed.Wpf.Toolkit.WizardPage PageLuaEngineInstall { get; internal set; }
-        public Xceed.Wpf.Toolkit.WizardPage PageLuaBackendInstall { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageRegion { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage PageGameData { get; internal set; }
         public Xceed.Wpf.Toolkit.WizardPage LastPage { get; internal set; }
