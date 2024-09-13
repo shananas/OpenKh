@@ -42,6 +42,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         private bool _panaceaInstalled;
         private bool _panaceaConsoleEnabled;
         private bool _panaceaDebugLogEnabled;
+        private bool _panaceaSoundDebugEnabled;
         private bool _panaceaCacheEnabled;
         private bool _panaceaQuickMenuEnabled;
         private bool _devView;
@@ -144,9 +145,23 @@ namespace OpenKh.Tools.ModsManager.ViewModels
             {
                 _panaceaDebugLogEnabled = value;
                 ConfigurationService.DebugLog = _panaceaDebugLogEnabled;
+                if (_panaceaSoundDebugEnabled)
+                    PanaceaSoundDebugEnabled = false;
                 OnPropertyChanged(nameof(PanaceaDebugLogEnabled));
                 UpdatePanaceaSettings();
             }
+        }
+        public bool PanaceaSoundDebugEnabled
+        {
+            get => _panaceaSoundDebugEnabled;
+            set
+            {
+                _panaceaSoundDebugEnabled = value;
+                ConfigurationService.SoundDebug = _panaceaSoundDebugEnabled;
+                OnPropertyChanged(nameof(PanaceaSoundDebugEnabled));
+                UpdatePanaceaSettings();
+            }
+
         }
         public bool PanaceaCacheEnabled
         {
@@ -301,6 +316,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                 DevView = ConfigurationService.DevView;
                 _panaceaConsoleEnabled = ConfigurationService.ShowConsole;
                 _panaceaDebugLogEnabled = ConfigurationService.DebugLog;
+                _panaceaSoundDebugEnabled = ConfigurationService.SoundDebug;
                 _panaceaCacheEnabled = ConfigurationService.EnableCache;
                 _panaceaQuickMenuEnabled = ConfigurationService.QuickMenu;
             }
@@ -723,7 +739,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                             return Task.CompletedTask;
                         }
                     }
-                    if (ConfigurationService.PCVersion == "Steam" && !(_launchGame == "kh3d"))
+                    if (ConfigurationService.PCVersion == "Steam" && !(_launchGame == "kh3d") && ConfigurationService.SteamAPITrick1525 == false)
                     {
                         if (ConfigurationService.PcReleaseLocation != null)
                         {
@@ -773,7 +789,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                             return Task.CompletedTask;
                         }
                     }
-                    else if (ConfigurationService.PCVersion == "Steam" && _launchGame == "kh3d")
+                    else if (ConfigurationService.PCVersion == "Steam" && _launchGame == "kh3d" && ConfigurationService.SteamAPITrick28 == false)
                     {
                         if (ConfigurationService.PcReleaseLocationKH3D != null)
                         {
@@ -1306,7 +1322,8 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                         }
                     }
                     textToWrite += $"\r\nshow_console={_panaceaConsoleEnabled}\r\n" +
-                        $"debug_log={_panaceaDebugLogEnabled}\r\nenable_cache={_panaceaCacheEnabled}\r\nquick_menu={_panaceaQuickMenuEnabled}";
+                        $"debug_log={_panaceaDebugLogEnabled}\r\nsound_debug={_panaceaSoundDebugEnabled}\r\n" +
+                        $"enable_cache={_panaceaCacheEnabled}\r\nquick_menu={_panaceaQuickMenuEnabled}";
                     File.WriteAllText(panaceaSettings, textToWrite);
                 }
                 else if (ConfigurationService.PcReleaseLocationKH3D != null)
@@ -1323,7 +1340,8 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                         }
                     }
                     textToWrite += $"\r\nshow_console={_panaceaConsoleEnabled}\r\n" +
-                        $"debug_log={_panaceaDebugLogEnabled}\r\nenable_cache={_panaceaCacheEnabled}\r\nquick_menu={_panaceaQuickMenuEnabled}";
+                        $"debug_log={_panaceaDebugLogEnabled}\r\nsound_debug={_panaceaSoundDebugEnabled}\r\n" +
+                        $"enable_cache={_panaceaCacheEnabled}\r\nquick_menu={_panaceaQuickMenuEnabled}";
                     File.WriteAllText(panaceaSettings, textToWrite);
                 }
             }
