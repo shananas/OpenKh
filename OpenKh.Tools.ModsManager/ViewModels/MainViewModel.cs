@@ -480,7 +480,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     ConfigPcsx2Location = ConfigurationService.Pcsx2Location,
                     ConfigPcReleaseLocation = ConfigurationService.PcReleaseLocation,
                     ConfigPcReleaseLocationKH3D = ConfigurationService.PcReleaseLocationKH3D,
-                    ConfigPcReleaseLanguage = ConfigurationService.PcReleaseLanguage,
                     ConfigRegionId = ConfigurationService.RegionId,
                     ConfigPanaceaInstalled = ConfigurationService.PanaceaInstalled,
                     ConfigLuaEngineLocation = ConfigurationService.LuaEngineLocation,
