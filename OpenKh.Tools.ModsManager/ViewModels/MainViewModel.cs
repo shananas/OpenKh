@@ -55,7 +55,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
             "Recom",
             "kh3d"
         };
-        private int _wizardVersionNumber = 5;
+        private int _wizardVersionNumber = 6;
         private string[] executable = new string[]
         {
             "KINGDOM HEARTS II FINAL MIX.exe",
@@ -71,7 +71,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         private const string REMASTERED_FILES_FOLDER_NAME = "remastered";
 
         public static bool overwriteMod = false;
-        public string Title => ApplicationName;
+        public string Title => ApplicationName + " 3.4.1-KH2Rando";
         public string CurrentVersion => ApplicationVersion;
         public ObservableCollection<ModViewModel> ModsList { get; set; }
         public ObservableCollection<string> PresetList { get; set; }
