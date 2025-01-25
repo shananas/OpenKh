@@ -49,6 +49,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
         private int _gameCollection = 0;
         private string _pcReleaseLanguage = ConfigurationService.PcReleaseLanguage;
         private string _gameDataLocation = ConfigurationService.GameDataLocation;
+        private string _luaEngineLocation = ConfigurationService.LuaEngineLocation;
         private List<string> LuaScriptPaths = new List<string>();
         private bool _overrideGameDataFound = false;
 
@@ -569,6 +570,42 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                 ConfigurationService.RegionId = value;
             }
         }
+        public RelayCommand SelectLuaEngineLocationCommand { get; }
+        public string LuaEngineLocation
+        {
+            get => _luaEngineLocation;
+            set
+            {
+                _luaEngineLocation = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LuaEngineFoundVisibility));
+                OnPropertyChanged(nameof(LuaEngineNotFoundVisibility));
+            }
+        }
+        public bool IsLuaEngineInstalled
+        {
+            get
+            {
+                if (File.Exists(Path.Combine(ConfigurationService.LuaEngineLocation, "LuaEngine-REBORN.exe")))
+                {
+                    if ("v" + FileVersionInfo.GetVersionInfo(Path.Combine(ConfigurationService.LuaEngineLocation, "LuaEngine-REBORN.exe")).ProductVersion == MainViewModel.releases.TagName)
+                    {
+                        return ConfigurationService.LuaEngineInstalled = true;
+                    }
+                    else
+                        return ConfigurationService.LuaEngineInstalled = false;
+                }
+                else
+                    return ConfigurationService.LuaEngineInstalled = false;
+            }
+        }
+        public RelayCommand InstallLuaEngineCommand { get; set; }
+        public bool LuaEngineInstalled { get; set; }
+        public Visibility LuaEngineFoundVisibility => IsLuaEngineInstalled ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility LuaEngineNotFoundVisibility => IsLuaEngineInstalled ? Visibility.Collapsed : Visibility.Visible;
+        private string LuaEngineInstall => ConfigurationService.LuaEngineLocation;
+
+
         public bool IsLuaBackendInstalled
         {
             get
@@ -1139,6 +1176,61 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                 {
                     MessageBox.Show(ex.Message);
                     return;
+                }
+            });
+            SelectLuaEngineLocationCommand = new RelayCommand(_ =>
+                FileDialog.OnFolder(path => LuaEngineLocation = path));
+            InstallLuaEngineCommand = new RelayCommand(installed =>
+            {
+                if (!Convert.ToBoolean(installed))
+                {
+                    //var gitClient = new GitHubClient(new ProductHeaderValue("LuaEngine.exe"));
+                    //var releases = gitClient.Repository.Release.GetLatest(owner: "TopazTK", name: "LuaEngine").Result;
+                    //string DownPath = Path.GetTempPath() + "LuaEngine" + Path.GetExtension(releases.Assets[0].Name);
+                    //if (!Directory.Exists(ConfigurationService.LuaEngineLocation))
+                    //    Directory.CreateDirectory(ConfigurationService.LuaEngineLocation);
+                    //var _client = new WebClient();
+                    //_client.DownloadFile(new System.Uri(releases.Assets[0].BrowserDownloadUrl), DownPath);
+                    //try
+                    //{
+                    //    using (ZipFile zip = new ZipFile(DownPath))
+                    //    {
+                    //        zip.ExtractAll(LuaEngineInstall, ExtractExistingFileAction.OverwriteSilently);
+                    //    }
+                    //}
+                    //catch (Exception e)
+                    //{
+                    //    MessageBox.Show(
+                    //            $"Unable to extract \"{Path.GetFileName(DownPath)}\" as it is not a zip file. You may have to install it manually and extract it to the LuaEngine folder inside of OpenKH.",
+                    //            "Run error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    //    File.Delete(DownPath);
+                    //}
+                    //string config = File.ReadAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"));
+                    //int index = config.IndexOf("script_paths:", config.IndexOf("- name: \"KINGDOM HEARTS II FINAL MIX\"")) + 15;
+                    //File.WriteAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"),
+                    //    config.Insert(index, "      - \"" + Path.Combine(ConfigurationService.GameModPath, "kh2/scripts\"\r\n").Replace("\\", "/")));
+                    //File.Delete(DownPath);
+                    //ConfigurationService.LuaEngineInstalled = true;
+                    //OnPropertyChanged(nameof(IsLuaEngineInstalled));
+                    //OnPropertyChanged(nameof(LuaEngineFoundVisibility));
+                    //OnPropertyChanged(nameof(LuaEngineNotFoundVisibility));
+                }
+                else
+                {
+                    if (File.Exists(Path.Combine(LuaEngineInstall, "gameFile.yml")))
+                    {
+                        string config = File.ReadAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"));
+                        if (!config.Contains("      - \"" + Path.Combine(ConfigurationService.GameModPath, "kh2/scripts\"\r\n").Replace("\\", "/")))
+                        {
+                            int index = config.IndexOf("script_paths:", config.IndexOf("- name: \"KINGDOM HEARTS II FINAL MIX\"")) + 15;
+                            File.WriteAllText(Path.Combine(LuaEngineInstall, "gameFile.yml"),
+                            config.Insert(index, "      - \"" + Path.Combine(ConfigurationService.GameModPath, "kh2/scripts\"\r\n").Replace("\\", "/")));
+                        }
+                        ConfigurationService.LuaEngineInstalled = true;
+                        OnPropertyChanged(nameof(IsLuaEngineInstalled));
+                        OnPropertyChanged(nameof(LuaEngineFoundVisibility));
+                        OnPropertyChanged(nameof(LuaEngineNotFoundVisibility));
+                    }
                 }
             });
             InstallLuaBackendCommand = new RelayCommand(installed =>

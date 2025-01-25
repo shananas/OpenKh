@@ -34,6 +34,8 @@ namespace OpenKh.Tools.ModsManager.Services
             public string Pcsx2Location { get; internal set; }
             public string PcReleaseLocation { get; internal set; }
             public string PcReleaseLocationKH3D { get; internal set; }
+            public string LuaEnginePath { get; internal set; }
+            public bool LuaEngineInstalled { get; internal set; }
             public string PcReleaseLanguage { get; internal set; } = "en";
             public int RegionId { get; internal set; }
             public bool PanaceaInstalled { get; internal set; }
@@ -494,6 +496,24 @@ namespace OpenKh.Tools.ModsManager.Services
             set
             {
                 _config.DarkMode = value;
+                _config.Save(ConfigPath);
+            }
+        }
+        public static string LuaEngineLocation
+        {
+            get => _config.LuaEnginePath ?? Path.Combine(StoragePath, "LuaEngine");
+            set
+            {
+                _config.LuaEnginePath = value;
+                _config.Save(ConfigPath);
+            }
+        }
+        public static bool LuaEngineInstalled
+        {
+            get => _config.LuaEngineInstalled;
+            set
+            {
+                _config.LuaEngineInstalled = value;
                 _config.Save(ConfigPath);
             }
         }

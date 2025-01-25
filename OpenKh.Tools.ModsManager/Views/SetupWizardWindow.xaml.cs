@@ -38,6 +38,7 @@ namespace OpenKh.Tools.ModsManager.Views
         public string ConfigPcReleaseLocation { get => _vm.PcReleaseLocation; set => _vm.PcReleaseLocation = value; }
         public string ConfigPcReleaseLocationKH3D { get => _vm.PcReleaseLocationKH3D; set => _vm.PcReleaseLocationKH3D = value; }
         public string ConfigGameDataLocation { get => _vm.GameDataLocation; set => _vm.GameDataLocation = value; }
+        public string ConfigLuaEngineLocation { get => _vm.LuaEngineLocation; set => _vm.LuaEngineLocation = value; }
         public int ConfigRegionId { get => _vm.RegionId; set => _vm.RegionId = value; }
         public bool ConfigPanaceaInstalled { get => _vm.PanaceaInstalled; set => _vm.PanaceaInstalled = value; }
 
