@@ -481,6 +481,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     }
                     else
                         PC = false;
+                    ConfigurationService.WizardVersionNumber = _wizardVersionNumber;
                 }
             });
 
