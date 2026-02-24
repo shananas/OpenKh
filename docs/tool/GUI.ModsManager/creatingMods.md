@@ -23,6 +23,7 @@ This document will focus on teaching you how to create mods using the OpenKH Mod
       * [sklt](#sklt-source-example)
       * [arif](#arif-source-example)
       * [memt](#memt-source-example)
+      * [went](#went-source-example)
       * [fmab](#fmab-source-example)
       * [enmp](#enmp-source-example)
       * [fmlv](#fmlv-source-example)
@@ -315,6 +316,7 @@ Asset Example
  * `sklt`
  * `arif`
  * `memt`
+ * `went`
  * `fmab`
  * `enmp`
  * `fmlv`
@@ -521,6 +523,25 @@ MemberIndices:
     Friend2: 32
     FriendWorld: 42
 ```
+
+### `went` Source Example
+```
+Sora: #Specify a name to patch a WENT Set. 
+  1: 9345 #Specify an index to patch, and an ObjEntry ID to patch it with
+  2: 9777
+  98: 998
+  99: 998 #If expanding a WENT set, you need to expand it sequentially (I.e you cannot skip from entry 98 to 101 right after)
+  100: 999
+  101: 1000
+
+#Full list of names of WENT sets that are listpatchable:
+#Sora, SoraNM, SoraTR, SoraWI
+#Donald, DonaldNM, DonaldTR, DonaldWI
+#Goofy, GoofyLK, GoofyNM, GoofyTR, GoofyWI
+#Aladdin, Auron, Mulan, Ping, Tron, Mickey, Beast
+#Jack, Simba, Sparrow, Riku, SparrowHuman
+```
+
 
 ### `fmab` Source Example
 ```
