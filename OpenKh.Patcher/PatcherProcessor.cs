@@ -679,6 +679,10 @@ namespace OpenKh.Patcher
     { "worldzz", 0 }, { "endofsea", 1 }, { "twilighttown", 2 },  { "destinyisland", 3 },  { "hollowbastion", 4 }, { "beastscastle", 5 }, { "olympuscoliseum", 6 },  { "agrabah", 7 }, { "thelandofdragons", 8 },  { "100acrewood", 9 },  { "prideland", 10 }, { "atlantica", 11 }, { "disneycastle", 12 }, { "timelessriver", 13}, {"halloweentown", 14}, { "worldmap", 15 }, { "portroyal", 16 }, { "spaceparanoids", 17 }, { "theworldthatneverwas", 18 }
     };
 
+        private static readonly Dictionary<string, int> wentNameMap =
+    new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+    {        ["Sora"] = 1, ["SoraNM"] = 11, ["Donald"] = 17, ["DonaldNM"] = 19, ["Goofy"] = 20, ["GoofyLK"] = 21, ["GoofyNM"] = 22, ["Aladdin"] = 23, ["Auron"] = 24, ["Mulan"] = 25, ["Ping"] = 26, ["Tron"] = 27, ["Mickey"] = 28, ["Beast"] = 31, ["Jack"] = 32, ["Simba"] = 33, ["Sparrow"] = 34, ["Riku"] = 35, ["SparrowHuman"] = 36, ["SoraTR"] = 37, ["SoraWI"] = 43, ["DonaldTR"] = 49, ["DonaldWI"] = 50, ["GoofyTR"] = 51, ["GoofyWI"] = 52 };
+
         private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
         private static void PatchList(Context context, List<AssetFile> sources, Stream stream)
@@ -804,15 +808,66 @@ namespace OpenKh.Patcher
 
                         foreach (var character in moddedLevels)
                         {
-                            foreach (var level in moddedLevels[character.Key])
+                            var charIndex = characterMap[character.Key] - 1;
+                            var characterData = levelList.Characters[charIndex];
+
+                            foreach (var level in character.Value)
                             {
-                                levelList.Characters[characterMap[character.Key] - 1].Levels[level.Key - 1] = moddedLevels[character.Key][level.Key];
+                                int levelIndex = level.Key - 1;
+                                while (characterData.Levels.Count <= levelIndex)
+                                {
+                                    characterData.Levels.Add(new Kh2.Battle.Lvup.PlayableCharacter.Level());
+                                }
+                                characterData.Levels[levelIndex] = level.Value;
                             }
+                            characterData.NumLevels = characterData.Levels.Count;
                         }
 
                         levelList.Write(stream.SetPosition(0));
                         break;
+                        
+                    case "went":
+                    {
+                        var went = Kh2.SystemData.Went.Read(stream);
 
+                        var mod = deserializer.Deserialize<
+                            Dictionary<string, Dictionary<int, uint>>
+                        >(sourceText);
+
+                        foreach (var headerEntry in mod)
+                        {
+                            if (!wentNameMap.TryGetValue(headerEntry.Key, out int headerIndex))
+                                throw new Exception($"Invalid Went name: {headerEntry.Key}");
+
+                            uint offset = went.Offsets[headerIndex];
+                            if (offset == 0)
+                                continue;
+
+                            var set = went.Sets
+                                .Find(x => x.OriginalOffset == offset);
+
+                            if (set == null)
+                                throw new Exception($"Set not found for offset {offset}");
+
+                            foreach (var entry in headerEntry.Value)
+                            {
+                                int weaponIndex = entry.Key;
+                                uint weaponId = entry.Value;
+
+                                while (set.WeaponIds.Count <= weaponIndex)
+                                    set.WeaponIds.Add(0);
+
+                                set.WeaponIds[weaponIndex] = weaponId;
+                            }
+                        }
+
+                        stream.SetLength(0);
+                        stream.Position = 0;
+
+                        went.Write(stream);
+                        break;
+                    }
+                        
                     case "bons":
                         var bonusRaw = Kh2.Battle.Bons.Read(stream);
                         var bonusList = new Dictionary<byte, Dictionary<string, Kh2.Battle.Bons>>();
@@ -1627,3 +1682,4 @@ namespace OpenKh.Patcher
         }
     }
 }
+
