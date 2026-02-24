@@ -3188,6 +3188,103 @@ namespace OpenKh.Tests.Patcher
         }
 
         [Fact]
+        public void ListPatchWentTest()
+        {
+            var patcher = new PatcherProcessor();
+
+            var patch = new Metadata()
+            {
+                Assets = new List<AssetFile>()
+        {
+            new AssetFile()
+            {
+                Name = "03system.bin",
+                Method = "binarc",
+                Source = new List<AssetFile>()
+                {
+                    new AssetFile()
+                    {
+                        Name = "went",
+                        Method = "listpatch",
+                        Type = "List",
+                        Source = new List<AssetFile>()
+                        {
+                            new AssetFile()
+                            {
+                                Name = "WentList.yml",
+                                Type = "went"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+            };
+
+            File.Create(Path.Combine(AssetsInputDir, "03system.bin")).Using(stream =>
+            {
+                var went = new Kh2.SystemData.Went
+                {
+                    Offsets = new List<uint>(new uint[70]),
+                    Sets = new List<Kh2.SystemData.Went.WentSet>()
+                };
+
+                var set = new Kh2.SystemData.Went.WentSet()
+                {
+                    OriginalOffset = 1,
+                    WeaponIds = new List<uint>() { 100 }
+                };
+
+                went.Sets.Add(set);
+
+                went.Offsets[1] = 1;
+
+                using var wentStream = new MemoryStream();
+                went.Write(wentStream);
+
+                Bar.Write(stream, new Bar()
+        {
+            new Bar.Entry()
+            {
+                Name = "went",
+                Type = Bar.EntryType.List,
+                Stream = wentStream
+            }
+        });
+            });
+
+            File.Create(Path.Combine(ModInputDir, "WentList.yml")).Using(stream =>
+            {
+                var writer = new StreamWriter(stream);
+
+                writer.WriteLine("Sora:");
+                writer.WriteLine("  0: 500");
+                writer.WriteLine("  1: 777");
+
+                writer.Flush();
+            });
+
+            patcher.Patch(AssetsInputDir, ModOutputDir, patch, ModInputDir, Tests: true);
+
+            AssertFileExists(ModOutputDir, "03system.bin");
+
+            File.OpenRead(Path.Combine(ModOutputDir, "03system.bin")).Using(stream =>
+            {
+                var binarc = Bar.Read(stream);
+                var went = Kh2.SystemData.Went.Read(binarc[0].Stream);
+
+                uint soraOffset = went.Offsets[1];
+
+                var set = went.Sets.Find(x => x.OriginalOffset == soraOffset);
+
+                Assert.Equal(2, set.WeaponIds.Count);
+                Assert.Equal((uint)500, set.WeaponIds[0]);
+                Assert.Equal((uint)777, set.WeaponIds[1]);
+            });
+        }
+
+
+        [Fact]
         public void ListPatchPlacesTest()
         {
             var patcher = new PatcherProcessor();
