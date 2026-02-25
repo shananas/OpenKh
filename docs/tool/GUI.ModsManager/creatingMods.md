@@ -25,6 +25,8 @@ This document will focus on teaching you how to create mods using the OpenKH Mod
       * [memt](#memt-source-example)
       * [went](#went-source-example)
       * [fmab](#fmab-source-example)
+      * [prty](#prty-source-example)
+      * [sstm](#sstm-source-example)
       * [enmp](#enmp-source-example)
       * [fmlv](#fmlv-source-example)
       * [lvpm](#lvpm-source-example)
@@ -42,6 +44,7 @@ This document will focus on teaching you how to create mods using the OpenKH Mod
       * [soundinfo](#soundinfo-source-example)
       * [place](#place-source-example)
       * [jigsaw](#jigsaw-source-example)
+      * [slct](#slct-source-example)
   * [bbsarc](#bbsarc-bbs)
   * [Example of a Fully Complete `mod.yml` File](#an-example-of-a-fully-complete-modyml-can-be-seen-below-and-the-full-source-of-the-mod-can-be-seen-here)
 * [Generating a Simple `mod.yml` for New Mod Authors](#generating-a-simple-modyml-for-new-mod-authors)
@@ -318,6 +321,8 @@ Asset Example
  * `memt`
  * `went`
  * `fmab`
+ * `prty`
+ * `sstm`
  * `enmp`
  * `fmlv`
  * `lvup`
@@ -334,6 +339,7 @@ Asset Example
  * `soundinfo`
  * `place`
  * `jigsaw`
+ * `slct`
 
 Asset Example
 ```
@@ -352,6 +358,21 @@ Asset Example
     source:
       - name: AtkpList.yml
         type: atkp
+
+#In order to patch a list file which is a subfile of a subfile, you must do the following:
+- name: 03system.bin
+  method: binarc
+  source:
+  - name: pref
+    method: binarc
+    type: Binary
+    source:
+      - name: prty
+        method: listpatch
+        type: List
+        source:
+          - name: PrtyList.yml
+            type: prty
 ```
 
 ### `trsr` Source Example
@@ -419,7 +440,9 @@ Items:
   Picture: 1
   Icon1: 9
   Icon2: 0
-  InsertBefore: 7 #This will insert the item ID before the item ID you specify here. Defaults to 0, which will append to the item list instead. You can alternatively use InsertAfter. 
+  InsertBefore: 7 #This will insert the item ID before the item ID you specify here.
+  #Defaults to 0, which will append to the item list instead.
+  #You can alternatively use InsertAfter. 
 ```
 ### `shop` Source Example
 ```
@@ -523,7 +546,6 @@ MemberIndices:
     Friend2: 32
     FriendWorld: 42
 ```
-
 ### `went` Source Example
 ```
 Sora: #Specify a name to patch a WENT Set. 
@@ -541,8 +563,6 @@ Sora: #Specify a name to patch a WENT Set.
 #Aladdin, Auron, Mulan, Ping, Tron, Mickey, Beast
 #Jack, Simba, Sparrow, Riku, SparrowHuman
 ```
-
-
 ### `fmab` Source Example
 ```
 Entries:
@@ -583,7 +603,128 @@ Entries:
     GlideTurnSpeed: 1.5
     DodgeRollInvulnerableFrames: 0.7
 ```
-
+### `prty` Source Example
+```
+Sora:
+  WalkSpeed: 2.0
+  RunSpeed: 8.0
+  JumpHeight: 185
+  TurnSpeed: 0.2617994
+  HangHeight: 150
+  HangMargin: 210
+  StunTime: 0
+  MpDrive: 3000
+  UpDownSpeed: 0
+  DashSpeed: 0
+  Acceleration: 0
+  Brake: 0
+  Subjective: 150
+#The character you wish to modify must match one of these:
+#Sora, ValorForm, WisdomForm, MasterForm, FinalForm, AntiForm, SoraLK, SoraLM, LimitForm
+#Donald, DonaldLK, DonaldLM, Goofy, GoofyLK
+#Aladdin, Auron, Mulan, Ping, Tron, Mickey, Beast, Jack
+#Simba, Sparrow, Riku, MagicCarpet, LightCycle
+#SoraDie, Unknown1, Unknown2, GummiShip, RedRocket, Neverland, Session
+```
+### `sstm` Source Example
+```
+#Note: Not all fields need to be filled out. Fields you don't need to change can be left out, and will remain unmodified.
+CeilingStop: 0.49
+CeilingDisableCommandTime: 16
+HangeRangeH: 30
+HangeRangeL: 60
+HangRangeXZ: 20
+FallMax: 16
+BlowBrakeXZ: 0.8
+BlowMinXZ: 0.1
+BlowBrakeUp: 0.8
+BlowUp: 24
+BlowSpeed: 40
+BlowToHitBack: 8
+HitBack: 200
+HitBackSmall: 200
+HitBackToJump: 0.048
+FlyBlowBrake: 0.8
+FlyBlowStop: 0.05
+FlyBlowUpAdjust: 0.3
+MagicJump: 40
+LockOnRange: 1200
+LockOnReleaseRange: 1200
+StunRecov: 0.5
+StunRecovHp: 0.5
+StunRelax: 8
+DriveZako: 0.75
+ChangeTimeZako: 0.2
+DriveTime: 600
+DriveTimeRelax: 0.5
+ChangeTimeAddRate: 12
+ChangeTimeSubRate: 15
+MpDriveRate: 2
+MpToMpDrive: 12
+SummonTimeRelax: 0.25
+SummonPrayTime: 30
+SummonPrayTimeSkip: 60
+AntiFormDriveCount: 5
+AntiFormSubCount: 6
+AntiFormDamageRate: 1.5
+FinalFormRate: 3
+FinalFormMulRate: 3
+FinalFormMaxRate: 75
+FinalFormSubCount: 10
+AttackDistanceToSpeed: 0.1
+AlCarpetDashInner: 0.8660254
+AlCarpetDashDelay: 60
+AlCarpetDashAcceleration: 0.98
+AlCarpetDashBrake: 0.98
+LkDashDriftInner: 0.8191521
+LkDashDriftTime: 60
+LkDashAccelerationDrift: 0.95
+LkDashAccelerationStop: 0.9
+LkDashDriftSpeed: 12
+LkMagicJump: 30
+MickeyChargeWait: 4
+MickeyDownRate: 0.8
+MickeyMinRate: 0.5
+LmSwimSpeed: 18
+LmSwimControl: 6
+LmSwimAcceleration: 0.96
+LmDolphinAcceleration: 0
+LmDolphinSpeedMax: 20
+LmDolphinSpeedMin: 8
+LmDolphinSpeedMaxDistance: 500
+LmDolphinSpeedMinDistance: 300
+LmDolphinRotationMax: 1.570796
+LmDolphinRotationDist: 300
+LmDolphinRotationMaxDistance: 100
+LmDolphinDistanceToTime: 0.2
+LmDolphinTimeMax: 120
+LmDolphinTimeMin: 60
+LmDolphinNearSpeed: 4
+DriveBerserkAttack: 2
+MpHaste: 0.25
+MpHastera: 0.5
+MpHastega: 0.75
+DrawRange: 125
+ComboDamageUp: 10
+ReactionDamageUp: 50
+DamageDrive: 50
+DriveBoost: 0.2
+FormBoost: 0.8
+ExpChance: 0.5
+Defender: 3
+ElementUp: 20
+DamageAspir: 75
+HyperHeal: 0.75
+CombinationBoost: 0.8
+PrizeUp: 0.5
+LuckUp: 0.5
+ItemUp: 50
+AutoHeal: 60
+SummonBoost: 0.8
+DriveConvert: 0.5
+DefenseMaster: 0.25
+DefenseMasterRatio: 50
+```
 ### `enmp` Source Example
 ```
 - Id: 0
@@ -609,7 +750,6 @@ Entries:
   Prize: 1
   BonusLevel: 1  
 ```
-
 ### `fmlv` Source Example
 ```
 Final:
@@ -619,7 +759,6 @@ Final:
   FormLevel: 1
   GrowthAbilityLevel: 1
 ```
-
 ### `lvpm` Source Example
 ```
 - Level: 0
@@ -630,7 +769,6 @@ Final:
   MinStrength: 5
   Experience: 3212
 ```
-
 ### `lvup` Source Example
 ```
 Sora:
@@ -647,7 +785,6 @@ Sora:
     Strength: 0
     SwordAbility: 577
 ```
-
 ### `bons` Source Example
 ```
 2:
@@ -665,7 +802,6 @@ Sora:
     RewardId: 2
     Unknown0c: 0
 ```
-
 ### `atkp` Source Example
 ```
 - Id: 0 #Hitbox 0
@@ -702,7 +838,6 @@ Sora:
   Kind: ComboFinisher
   HpDrain: 15
 ```
-
 ### `przt` Source Example
 ```
 - Id: 1
@@ -722,7 +857,6 @@ Sora:
   Item3: 0
   Item3Percentage: 0
 ```
-
 ### `magc` Source Example
 ```
 - Id: 0 
@@ -764,7 +898,6 @@ Sora:
   World: 00
   Padding: []
 ```
-
 ### `vtbl` Source Example
 ```
 - Id: 26
@@ -783,7 +916,6 @@ Sora:
       Weight: 5
   Reserved: 0
 ```
-
 ### `btlv` Source Example
 ```
 - Id: 0
@@ -808,7 +940,6 @@ Sora:
   TheWorldThatNeverWas: 1
   Padding: []
 ```
-
 ### `objentry` Source Example
 ```
 4:
@@ -834,7 +965,6 @@ Sora:
   SpawnObject3: 0
   SpawnObject4: 0
 ```
-
 ### `libretto` Source Example
 ```
 - TalkMessageId: 752 #Id to update. This is used as "ReactionCommand" in ARDs.
@@ -883,6 +1013,31 @@ Sora:
   JigsawIdWorld: 99
   Unk07: 0
   Unk08: 0
+```
+### `slct Source Example
+```
+- Id: 1
+  ChoiceNum: 4 #Amount of options
+  ChoiceDefault: 3 #Option to default to
+  Choice:
+  - Id: 0 #Choice "Function"
+    MessageId: 0 #MessageID to assign to the Choice
+  - Id: 1
+    MessageId: 1
+  - Id: 2
+    MessageId: 2
+  - Id: 3
+    MessageId: 3
+  BaseSequence: 12 #Signed short, can be negative
+  TitleSequence: 13 #Signed short, can be negative
+  Information: 14 #Value tends to always be 0?
+  EntryId: 15 #
+  Task: 16
+  PauseMode: 0 #6 possible values. 0 = Null, 1 = Battle, 2 = Form, 3 = Mission, 4 = Event, 5 = Musical
+  Flag: 1 #Two possible flags. 0 Allows you to unpause, 1 disables unpausing to get out of the menu.
+  SoundPause: 19
+  Padding: #There are 25 padding bytes in total
+  - 0
 ```
 
 * `synthpatch` (KH2) - Modifies Mixdata.bar, a file used for various properties related to synthesis in KH2. 
