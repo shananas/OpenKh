@@ -45,6 +45,7 @@ This document will focus on teaching you how to create mods using the OpenKH Mod
       * [place](#place-source-example)
       * [jigsaw](#jigsaw-source-example)
       * [slct](#slct-source-example)
+  * [synthpatch](#synthpatch-kh2)     
   * [bbsarc](#bbsarc-bbs)
   * [Example of a Fully Complete `mod.yml` File](#an-example-of-a-fully-complete-modyml-can-be-seen-below-and-the-full-source-of-the-mod-can-be-seen-here)
 * [Generating a Simple `mod.yml` for New Mod Authors](#generating-a-simple-modyml-for-new-mod-authors)
@@ -1040,7 +1041,8 @@ Sora:
   - 0
 ```
 
-* `synthpatch` (KH2) - Modifies Mixdata.bar, a file used for various properties related to synthesis in KH2. 
+## `synthpatch` (KH2) 
+Modifies Mixdata.bar, a file used for various properties related to synthesis in KH2. 
 
  * `recipe`
  * `level`
