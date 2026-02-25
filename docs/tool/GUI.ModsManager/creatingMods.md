@@ -1014,7 +1014,7 @@ Sora:
   Unk07: 0
   Unk08: 0
 ```
-### `slct Source Example
+### `slct` Source Example
 ```
 - Id: 1
   ChoiceNum: 4 #Amount of options
