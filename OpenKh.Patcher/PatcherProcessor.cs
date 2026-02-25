@@ -867,6 +867,65 @@ namespace OpenKh.Patcher
                         went.Write(stream);
                         break;
                     }
+
+                    case "sstm":
+                    {
+                        var sstm = Kh2.SystemData.Sstm.Read(stream);
+
+                        var mod = deserializer.Deserialize<Dictionary<string, object>>(sourceText);
+
+                        foreach (var entry in mod)
+                        {
+                            var prop = typeof(Kh2.SystemData.Sstm).GetProperty(entry.Key);
+                            if (prop == null)
+                                throw new Exception($"Invalid SSTM field: {entry.Key}");
+
+                            var converted = Convert.ChangeType(
+                                entry.Value,
+                                Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
+                            );
+
+                            prop.SetValue(sstm, converted);
+                        }
+
+                        sstm.Write(stream);
+                        break;
+                    }
+
+                    case "prty":
+                    {
+                        var file = Kh2.SystemData.PrtyFile.Read(stream);
+
+                        var mod = deserializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(sourceText);
+
+                        foreach (var character in mod)
+                        {
+                            if (!Kh2.SystemData.Prty.CharacterMap.TryGetValue(character.Key, out int index))
+                                throw new Exception($"Invalid PRTY character: {character.Key}");
+
+                            int realIndex = index + 1;
+                            int offset = file.Offsets[realIndex];
+
+                            var entry = file.UniqueEntries[offset];
+
+                            foreach (var field in character.Value)
+                            {
+                                var prop = typeof(Kh2.SystemData.Prty).GetProperty(field.Key);
+                                if (prop == null)
+                                    throw new Exception($"Invalid PRTY field: {field.Key}");
+
+                                var converted = Convert.ChangeType(
+                                    field.Value,
+                                    Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
+                                );
+
+                                prop.SetValue(entry, converted);
+                            }
+                        }
+
+                        file.Write(stream);
+                        break;
+                    }
                         
                     case "bons":
                         var bonusRaw = Kh2.Battle.Bons.Read(stream);
@@ -1682,4 +1741,5 @@ namespace OpenKh.Patcher
         }
     }
 }
+
 
