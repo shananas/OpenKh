@@ -90,7 +90,7 @@ namespace OpenKh.Tools.ModsManager.Services
             Action<float> onProgress)
         {
             using var stream = File.OpenRead(isoLocation);
-            var rdi_stream = IsoUtility.GetSectors(stream, 0x244, stream.SetPosition(0x244 * 0x800).ReadByte() + 1);
+            var rdi_stream = IsoUtility.GetSectors(stream, 0x244, stream.SetPosition(0x244 * 0x800 + 8).ReadInt16() + 1);
             var rdi = RootDirInfo.Read(rdi_stream);
             await Task.Run(() => {
                 rdi.ExtractFiles(stream, Path.Combine(gameDataLocation, "Recom"), onProgress);
