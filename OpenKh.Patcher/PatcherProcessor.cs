@@ -679,6 +679,10 @@ namespace OpenKh.Patcher
     { "worldzz", 0 }, { "endofsea", 1 }, { "twilighttown", 2 },  { "destinyisland", 3 },  { "hollowbastion", 4 }, { "beastscastle", 5 }, { "olympuscoliseum", 6 },  { "agrabah", 7 }, { "thelandofdragons", 8 },  { "100acrewood", 9 },  { "prideland", 10 }, { "atlantica", 11 }, { "disneycastle", 12 }, { "timelessriver", 13}, {"halloweentown", 14}, { "worldmap", 15 }, { "portroyal", 16 }, { "spaceparanoids", 17 }, { "theworldthatneverwas", 18 }
     };
 
+        private static readonly Dictionary<string, int> wentNameMap =
+    new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+    {        ["Sora"] = 1, ["SoraNM"] = 11, ["Donald"] = 17, ["DonaldNM"] = 19, ["Goofy"] = 20, ["GoofyLK"] = 21, ["GoofyNM"] = 22, ["Aladdin"] = 23, ["Auron"] = 24, ["Mulan"] = 25, ["Ping"] = 26, ["Tron"] = 27, ["Mickey"] = 28, ["Beast"] = 31, ["Jack"] = 32, ["Simba"] = 33, ["Sparrow"] = 34, ["Riku"] = 35, ["SparrowHuman"] = 36, ["SoraTR"] = 37, ["SoraWI"] = 43, ["DonaldTR"] = 49, ["DonaldWI"] = 50, ["GoofyTR"] = 51, ["GoofyWI"] = 52 };
+
         private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
         private static void PatchList(Context context, List<AssetFile> sources, Stream stream)
@@ -804,15 +808,125 @@ namespace OpenKh.Patcher
 
                         foreach (var character in moddedLevels)
                         {
-                            foreach (var level in moddedLevels[character.Key])
+                            var charIndex = characterMap[character.Key] - 1;
+                            var characterData = levelList.Characters[charIndex];
+
+                            foreach (var level in character.Value)
                             {
-                                levelList.Characters[characterMap[character.Key] - 1].Levels[level.Key - 1] = moddedLevels[character.Key][level.Key];
+                                int levelIndex = level.Key - 1;
+                                while (characterData.Levels.Count <= levelIndex)
+                                {
+                                    characterData.Levels.Add(new Kh2.Battle.Lvup.PlayableCharacter.Level());
+                                }
+                                characterData.Levels[levelIndex] = level.Value;
                             }
+                            characterData.NumLevels = characterData.Levels.Count;
                         }
 
                         levelList.Write(stream.SetPosition(0));
                         break;
+                        
+                    case "went":
+                    {
+                        var went = Kh2.SystemData.Went.Read(stream);
 
+                        var mod = deserializer.Deserialize<
+                            Dictionary<string, Dictionary<int, uint>>
+                        >(sourceText);
+
+                        foreach (var headerEntry in mod)
+                        {
+                            if (!wentNameMap.TryGetValue(headerEntry.Key, out int headerIndex))
+                                throw new Exception($"Invalid Went name: {headerEntry.Key}");
+
+                            uint offset = went.Offsets[headerIndex];
+                            if (offset == 0)
+                                continue;
+
+                            var set = went.Sets
+                                .Find(x => x.OriginalOffset == offset);
+
+                            if (set == null)
+                                throw new Exception($"Set not found for offset {offset}");
+
+                            foreach (var entry in headerEntry.Value)
+                            {
+                                int weaponIndex = entry.Key;
+                                uint weaponId = entry.Value;
+
+                                while (set.WeaponIds.Count <= weaponIndex)
+                                    set.WeaponIds.Add(0);
+
+                                set.WeaponIds[weaponIndex] = weaponId;
+                            }
+                        }
+
+                        stream.SetLength(0);
+                        stream.Position = 0;
+
+                        went.Write(stream);
+                        break;
+                    }
+
+                    case "sstm":
+                    {
+                        var sstm = Kh2.SystemData.Sstm.Read(stream);
+
+                        var mod = deserializer.Deserialize<Dictionary<string, object>>(sourceText);
+
+                        foreach (var entry in mod)
+                        {
+                            var prop = typeof(Kh2.SystemData.Sstm).GetProperty(entry.Key);
+                            if (prop == null)
+                                throw new Exception($"Invalid SSTM field: {entry.Key}");
+
+                            var converted = Convert.ChangeType(
+                                entry.Value,
+                                Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
+                            );
+
+                            prop.SetValue(sstm, converted);
+                        }
+
+                        sstm.Write(stream);
+                        break;
+                    }
+
+                    case "prty":
+                    {
+                        var file = Kh2.SystemData.PrtyFile.Read(stream);
+
+                        var mod = deserializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(sourceText);
+
+                        foreach (var character in mod)
+                        {
+                            if (!Kh2.SystemData.Prty.CharacterMap.TryGetValue(character.Key, out int index))
+                                throw new Exception($"Invalid PRTY character: {character.Key}");
+
+                            int realIndex = index + 1;
+                            int offset = file.Offsets[realIndex];
+
+                            var entry = file.UniqueEntries[offset];
+
+                            foreach (var field in character.Value)
+                            {
+                                var prop = typeof(Kh2.SystemData.Prty).GetProperty(field.Key);
+                                if (prop == null)
+                                    throw new Exception($"Invalid PRTY field: {field.Key}");
+
+                                var converted = Convert.ChangeType(
+                                    field.Value,
+                                    Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
+                                );
+
+                                prop.SetValue(entry, converted);
+                            }
+                        }
+
+                        file.Write(stream);
+                        break;
+                    }
+                        
                     case "bons":
                         var bonusRaw = Kh2.Battle.Bons.Read(stream);
                         var bonusList = new Dictionary<byte, Dictionary<string, Kh2.Battle.Bons>>();
@@ -940,6 +1054,27 @@ namespace OpenKh.Patcher
                         Kh2.SystemData.Cmd.Write(stream.SetPosition(0), cmdList);
                         break;
 
+                    case "slct":
+                        var slctList = Kh2.Slct.Read(stream);
+                        var moddedSlct = deserializer.Deserialize<List<Kh2.Slct>>(sourceText);
+
+                        foreach (var entries in moddedSlct)
+                        {
+                            var existingEntry = slctList.FirstOrDefault(x => x.Id == entries.Id);
+
+                            if (existingEntry != null)
+                            {
+                                slctList[slctList.IndexOf(existingEntry)] = entries;
+                            }
+                            else
+                            {
+                                slctList.Add(entries);
+                            }
+                        }
+
+                        Kh2.Slct.Write(stream.SetPosition(0), slctList);
+                        break;
+                        
                     case "localset":
                         var localList = Kh2.Localset.Read(stream);
                         var moddedLocal = deserializer.Deserialize<List<Kh2.Localset>>(sourceText);
@@ -1627,3 +1762,6 @@ namespace OpenKh.Patcher
         }
     }
 }
+
+
+

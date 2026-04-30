@@ -3188,6 +3188,411 @@ namespace OpenKh.Tests.Patcher
         }
 
         [Fact]
+        public void ListPatchSlctTest()
+        {
+            var patcher = new PatcherProcessor();
+            var serializer = new Serializer();
+            var patch = new Metadata()
+            {
+                Assets = new List<AssetFile>()
+                {
+                    new AssetFile()
+                    {
+                        Name = "14mission.bar",
+                        Method = "binarc",
+                        Source = new List<AssetFile>()
+                        {
+                            new AssetFile()
+                            {
+                                Name = "slct",
+                                Method = "listpatch",
+                                Type = "List",
+                                Source = new List<AssetFile>()
+                                {
+                                    new AssetFile()
+                                    {
+                                        Name = "SlctList.yml",
+                                        Type = "slct"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            File.Create(Path.Combine(AssetsInputDir, "14mission.bar")).Using(stream =>
+            {
+                var slctEntry = new List<Kh2.Slct>()
+                {
+                    new Kh2.Slct
+                    {
+                        Id = 1,
+                        ChoiceNum = 2,
+                        ChoiceDefault = 3,
+                        Choice = Enumerable.Range(0, 4).Select(_ => new Kh2.ChoiceEntry { Id = 0, MessageId = 0 }).ToArray(),
+                        Padding = new byte[25]
+                    }
+                    };
+                using var slctStream = new MemoryStream();
+                Kh2.Slct.Write(slctStream, slctEntry);
+                Bar.Write(stream, new Bar() {
+                    new Bar.Entry()
+                    {
+                        Name = "slct",
+                        Type = Bar.EntryType.List,
+                        Stream = slctStream
+                    }
+                });
+            });
+
+            File.Create(Path.Combine(ModInputDir, "SlctList.yml")).Using(stream =>
+            {
+                var writer = new StreamWriter(stream);
+                writer.WriteLine("- Id: 1");
+                writer.WriteLine("  ChoiceNum: 2");
+                writer.WriteLine("  ChoiceDefault: 3");
+                writer.WriteLine("  Choice:");
+                writer.WriteLine("  - Id: 0");
+                writer.WriteLine("    MessageId: 0");
+                writer.WriteLine("  Padding:");
+                writer.WriteLine("    - 0");
+                writer.Flush();
+            });
+
+            patcher.Patch(AssetsInputDir, ModOutputDir, patch, ModInputDir, Tests: true);
+
+            AssertFileExists(ModOutputDir, "14mission.bar");
+
+            File.OpenRead(Path.Combine(ModOutputDir, "14mission.bar")).Using(stream =>
+            {
+                var binarc = Bar.Read(stream);
+                var slctStream = Kh2.Slct.Read(binarc[0].Stream);
+                Assert.Equal(1, slctStream[0].Id);
+                Assert.Equal(2, slctStream[0].ChoiceNum);
+                Assert.Equal(3, slctStream[0].ChoiceDefault);
+            });
+        }
+
+        [Fact]
+        public void ListPatchWentTest()
+        {
+            var patcher = new PatcherProcessor();
+
+            var patch = new Metadata()
+            {
+                Assets = new List<AssetFile>()
+        {
+            new AssetFile()
+            {
+                Name = "03system.bin",
+                Method = "binarc",
+                Source = new List<AssetFile>()
+                {
+                    new AssetFile()
+                    {
+                        Name = "went",
+                        Method = "listpatch",
+                        Type = "List",
+                        Source = new List<AssetFile>()
+                        {
+                            new AssetFile()
+                            {
+                                Name = "WentList.yml",
+                                Type = "went"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+            };
+
+            File.Create(Path.Combine(AssetsInputDir, "03system.bin")).Using(stream =>
+            {
+                var went = new Kh2.SystemData.Went
+                {
+                    Offsets = new List<uint>(new uint[70]),
+                    Sets = new List<Kh2.SystemData.Went.WentSet>()
+                };
+
+                var set = new Kh2.SystemData.Went.WentSet()
+                {
+                    OriginalOffset = 1,
+                    WeaponIds = new List<uint>() { 100 }
+                };
+
+                went.Sets.Add(set);
+
+                went.Offsets[1] = 1;
+
+                using var wentStream = new MemoryStream();
+                went.Write(wentStream);
+
+                Bar.Write(stream, new Bar()
+        {
+            new Bar.Entry()
+            {
+                Name = "went",
+                Type = Bar.EntryType.List,
+                Stream = wentStream
+            }
+        });
+            });
+
+            File.Create(Path.Combine(ModInputDir, "WentList.yml")).Using(stream =>
+            {
+                var writer = new StreamWriter(stream);
+
+                writer.WriteLine("Sora:");
+                writer.WriteLine("  0: 500");
+                writer.WriteLine("  1: 777");
+
+                writer.Flush();
+            });
+
+            patcher.Patch(AssetsInputDir, ModOutputDir, patch, ModInputDir, Tests: true);
+
+            AssertFileExists(ModOutputDir, "03system.bin");
+
+            File.OpenRead(Path.Combine(ModOutputDir, "03system.bin")).Using(stream =>
+            {
+                var binarc = Bar.Read(stream);
+                var went = Kh2.SystemData.Went.Read(binarc[0].Stream);
+
+                uint soraOffset = went.Offsets[1];
+
+                var set = went.Sets.Find(x => x.OriginalOffset == soraOffset);
+
+                Assert.Equal(2, set.WeaponIds.Count);
+                Assert.Equal((uint)500, set.WeaponIds[0]);
+                Assert.Equal((uint)777, set.WeaponIds[1]);
+            });
+        }
+
+        [Fact]
+        public void ListPatchSstmTest()
+        {
+            var patcher = new PatcherProcessor();
+
+            var patch = new Metadata()
+            {
+                Assets = new List<AssetFile>()
+        {
+            new AssetFile()
+            {
+                Name = "03system.bin",
+                Method = "binarc",
+                Source = new List<AssetFile>()
+                {
+                    new AssetFile()
+                    {
+                        Name = "pref",
+                        Method = "binarc",
+                        Type = "Binary",
+                        Source = new List<AssetFile>()
+                        {
+                            new AssetFile()
+                            {
+                                Name = "sstm",
+                                Method = "listpatch",
+                                Type = "List",
+                                Source = new List<AssetFile>()
+                                {
+                                    new AssetFile()
+                                    {
+                                        Name = "SstmList.yml",
+                                        Type = "sstm"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+            };
+
+            File.Create(Path.Combine(AssetsInputDir, "03system.bin")).Using(stream =>
+            {
+                var sstm = new Kh2.SystemData.Sstm()
+                {
+                    DriveTime = 10.0f,
+                    AntiFormDriveCount = 5
+                };
+
+                using var sstmStream = new MemoryStream();
+                sstm.Write(sstmStream);
+
+                using var prefStream = new MemoryStream();
+                Bar.Write(prefStream, new Bar()
+        {
+            new Bar.Entry()
+            {
+                Name = "sstm",
+                Type = Bar.EntryType.List,
+                Stream = sstmStream
+            }
+        });
+
+                Bar.Write(stream, new Bar()
+        {
+            new Bar.Entry()
+            {
+                Name = "pref",
+                Type = Bar.EntryType.Binary,
+                Stream = prefStream
+            }
+        });
+            });
+
+            File.Create(Path.Combine(ModInputDir, "SstmList.yml")).Using(stream =>
+            {
+                var writer = new StreamWriter(stream);
+                writer.WriteLine("DriveTime: 123.5");
+                writer.WriteLine("AntiFormDriveCount: 99");
+                writer.Flush();
+            });
+
+            patcher.Patch(AssetsInputDir, ModOutputDir, patch, ModInputDir, Tests: true);
+
+            File.OpenRead(Path.Combine(ModOutputDir, "03system.bin")).Using(stream =>
+            {
+                var systemBar = Bar.Read(stream);
+                var prefBar = Bar.Read(systemBar[0].Stream);
+
+                var sstm = Kh2.SystemData.Sstm.Read(prefBar[0].Stream);
+
+                Assert.Equal(123.5f, sstm.DriveTime);
+                Assert.Equal(99, sstm.AntiFormDriveCount);
+            });
+        }
+
+        [Fact]
+        public void ListPatchPrtyTest()
+        {
+            var patcher = new PatcherProcessor();
+
+            var patch = new Metadata()
+            {
+                Assets = new List<AssetFile>()
+        {
+            new AssetFile()
+            {
+                Name = "03system.bin",
+                Method = "binarc",
+                Source = new List<AssetFile>()
+                {
+                    new AssetFile()
+                    {
+                        Name = "pref",
+                        Method = "binarc",
+                        Type = "Binary",
+                        Source = new List<AssetFile>()
+                        {
+                            new AssetFile()
+                            {
+                                Name = "prty",
+                                Method = "listpatch",
+                                Type = "List",
+                                Source = new List<AssetFile>()
+                                {
+                                    new AssetFile()
+                                    {
+                                        Name = "PrtyList.yml",
+                                        Type = "prty"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+            };
+
+            File.Create(Path.Combine(AssetsInputDir, "03system.bin")).Using(stream =>
+            {
+                const int count = 70;
+
+                var sharedEntry = new Kh2.SystemData.Prty()
+                {
+                    WalkSpeed = 1.0f,
+                    RunSpeed = 2.0f
+                };
+
+                var prtyFile = new Kh2.SystemData.PrtyFile()
+                {
+                    Count = count,
+                    Offsets = new int[count],
+                    UniqueEntries = new Dictionary<int, Kh2.SystemData.Prty>()
+                };
+
+                using var tempStream = new MemoryStream();
+
+                prtyFile.Write(tempStream);
+
+                int headerSize = 4 + (count * 4);
+                int entryOffset = headerSize;
+
+                for (int i = 0; i < count; i++)
+                    prtyFile.Offsets[i] = (i == 0) ? 0 : entryOffset;
+
+                prtyFile.UniqueEntries[entryOffset] = sharedEntry;
+
+                using var prtyStream = new MemoryStream();
+                prtyFile.Write(prtyStream);
+
+                using var prefStream = new MemoryStream();
+                Bar.Write(prefStream, new Bar()
+        {
+            new Bar.Entry()
+            {
+                Name = "prty",
+                Type = Bar.EntryType.List,
+                Stream = prtyStream
+            }
+        });
+
+                Bar.Write(stream, new Bar()
+        {
+            new Bar.Entry()
+            {
+                Name = "pref",
+                Type = Bar.EntryType.Binary,
+                Stream = prefStream
+            }
+        });
+            });
+
+            File.Create(Path.Combine(ModInputDir, "PrtyList.yml")).Using(stream =>
+            {
+                var writer = new StreamWriter(stream);
+                writer.WriteLine("Sora:");
+                writer.WriteLine("  WalkSpeed: 5.5");
+                writer.Flush();
+            });
+
+            patcher.Patch(AssetsInputDir, ModOutputDir, patch, ModInputDir, Tests: true);
+
+            File.OpenRead(Path.Combine(ModOutputDir, "03system.bin")).Using(stream =>
+            {
+                var systemBar = Bar.Read(stream);
+                var prefBar = Bar.Read(systemBar[0].Stream);
+
+                var prtyFile = Kh2.SystemData.PrtyFile.Read(prefBar[0].Stream);
+
+                int realIndex = Kh2.SystemData.Prty.CharacterMap["Sora"] + 1;
+                int offset = prtyFile.Offsets[realIndex];
+
+                var entry = prtyFile.UniqueEntries[offset];
+
+                Assert.Equal(5.5f, entry.WalkSpeed);
+            });
+        }
+
+
+        [Fact]
         public void ListPatchPlacesTest()
         {
             var patcher = new PatcherProcessor();
