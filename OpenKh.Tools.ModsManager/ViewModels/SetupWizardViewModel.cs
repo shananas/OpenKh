@@ -1858,6 +1858,7 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     case PC:
                     {
                         var langFolder = ConfigurationService.PCVersion == "Steam" ? "dt" : _pcReleaseLanguage == "jp" ? "jp" : "en";
+                        string GamesFound = PcReleaseSelections;
 
                         await _gameDataExtractionService.ExtractKhPcEditionAsync(
                             gameDataLocation: gameDataLocation,
@@ -1876,11 +1877,11 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                                     langFolder,
                                     fileName
                                 ),
-                            extractkh1: ConfigurationService.Extractkh1,
-                            extractkh2: ConfigurationService.Extractkh2,
-                            extractbbs: ConfigurationService.Extractbbs,
-                            extractrecom: ConfigurationService.Extractrecom,
-                            extractkh3d: ConfigurationService.Extractkh3d,
+                            extractkh1: ConfigurationService.Extractkh1 && (GamesFound == "both" || GamesFound == "1.5+2.5"),
+                            extractkh2: ConfigurationService.Extractkh2 && (GamesFound == "both" || GamesFound == "1.5+2.5"),
+                            extractbbs: ConfigurationService.Extractbbs && (GamesFound == "both" || GamesFound == "1.5+2.5"),
+                            extractrecom: ConfigurationService.Extractrecom && (GamesFound == "both" || GamesFound == "1.5+2.5"),
+                            extractkh3d: ConfigurationService.Extractkh3d && (GamesFound == "both" || GamesFound == "2.8"),
                             ifRetry: async ex =>
                             {
                                 var delayedResult = new TaskCompletionSource<bool>();
