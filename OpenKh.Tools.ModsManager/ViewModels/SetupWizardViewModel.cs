@@ -471,7 +471,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                 }
                 return "";
             }
-            set { }
         }
 
         public int GameCollection
@@ -884,6 +883,33 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     }
                     else if (GameEdition == PC)
                     {
+                        string GamesFound = PcReleaseSelections;
+                        if (GamesFound == "1.5+2.5")
+                        {
+                            if (Extractkh3d)
+                            {
+                                Extractkh3d = false;
+                            }
+                        }
+                        else if (GamesFound == "2.8")
+                        {
+                            if (Extractkh1)
+                            {
+                                Extractkh1 = false;
+                            }
+                            if (Extractkh2)
+                            {
+                                Extractkh2 = false;
+                            }
+                            if (Extractbbs)
+                            {
+                                Extractbbs = false;
+                            }
+                            if (Extractrecom)
+                            {
+                                Extractrecom = false;
+                            }
+                        }
                         await ExtractGameData(null, GameDataLocation);
                     }
                 }
@@ -1858,7 +1884,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     case PC:
                     {
                         var langFolder = ConfigurationService.PCVersion == "Steam" ? "dt" : _pcReleaseLanguage == "jp" ? "jp" : "en";
-                        string GamesFound = PcReleaseSelections;
 
                         await _gameDataExtractionService.ExtractKhPcEditionAsync(
                             gameDataLocation: gameDataLocation,
@@ -1877,11 +1902,11 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                                     langFolder,
                                     fileName
                                 ),
-                            extractkh1: ConfigurationService.Extractkh1 && (GamesFound == "both" || GamesFound == "1.5+2.5"),
-                            extractkh2: ConfigurationService.Extractkh2 && (GamesFound == "both" || GamesFound == "1.5+2.5"),
-                            extractbbs: ConfigurationService.Extractbbs && (GamesFound == "both" || GamesFound == "1.5+2.5"),
-                            extractrecom: ConfigurationService.Extractrecom && (GamesFound == "both" || GamesFound == "1.5+2.5"),
-                            extractkh3d: ConfigurationService.Extractkh3d && (GamesFound == "both" || GamesFound == "2.8"),
+                            extractkh1: ConfigurationService.Extractkh1,
+                            extractkh2: ConfigurationService.Extractkh2,
+                            extractbbs: ConfigurationService.Extractbbs,
+                            extractrecom: ConfigurationService.Extractrecom,
+                            extractkh3d: ConfigurationService.Extractkh3d,
                             ifRetry: async ex =>
                             {
                                 var delayedResult = new TaskCompletionSource<bool>();

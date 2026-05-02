@@ -498,7 +498,7 @@ namespace OpenKh.Tools.ModsManager.Services
                 }
                 else
                 {
-                    _config.GamesToExtract.Remove("kh1");
+                    _config.GamesToExtract.RemoveAll(x => x == "kh1");
                 }
                 _config.Save(ConfigPath);
             }
@@ -514,7 +514,7 @@ namespace OpenKh.Tools.ModsManager.Services
                 }
                 else
                 {
-                    _config.GamesToExtract.Remove("kh2");
+                    _config.GamesToExtract.RemoveAll(x => x == "kh2");
                 }
                 _config.Save(ConfigPath);
             }
@@ -530,7 +530,7 @@ namespace OpenKh.Tools.ModsManager.Services
                 }
                 else
                 {
-                    _config.GamesToExtract.Remove("bbs");
+                    _config.GamesToExtract.RemoveAll(x => x == "bbs");
                 }
                 _config.Save(ConfigPath);
             }
@@ -546,7 +546,7 @@ namespace OpenKh.Tools.ModsManager.Services
                 }
                 else
                 {
-                    _config.GamesToExtract.Remove("Recom");
+                    _config.GamesToExtract.RemoveAll(x => x == "Recom");
                 }
                 _config.Save(ConfigPath);
             }
@@ -562,7 +562,7 @@ namespace OpenKh.Tools.ModsManager.Services
                 }
                 else
                 {
-                    _config.GamesToExtract.Remove("kh3d");
+                    _config.GamesToExtract.RemoveAll(x => x == "kh3d");
                 }
                 _config.Save(ConfigPath);
             }
