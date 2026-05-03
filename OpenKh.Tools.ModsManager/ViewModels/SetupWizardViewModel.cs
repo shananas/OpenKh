@@ -471,7 +471,6 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                 }
                 return "";
             }
-            set { }
         }
 
         public int GameCollection
@@ -884,6 +883,33 @@ namespace OpenKh.Tools.ModsManager.ViewModels
                     }
                     else if (GameEdition == PC)
                     {
+                        string GamesFound = PcReleaseSelections;
+                        if (GamesFound == "1.5+2.5")
+                        {
+                            if (Extractkh3d)
+                            {
+                                Extractkh3d = false;
+                            }
+                        }
+                        else if (GamesFound == "2.8")
+                        {
+                            if (Extractkh1)
+                            {
+                                Extractkh1 = false;
+                            }
+                            if (Extractkh2)
+                            {
+                                Extractkh2 = false;
+                            }
+                            if (Extractbbs)
+                            {
+                                Extractbbs = false;
+                            }
+                            if (Extractrecom)
+                            {
+                                Extractrecom = false;
+                            }
+                        }
                         await ExtractGameData(null, GameDataLocation);
                     }
                 }
