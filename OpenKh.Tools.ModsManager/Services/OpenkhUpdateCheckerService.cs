@@ -18,7 +18,7 @@ namespace OpenKh.Tools.ModsManager.Services
         {
             var gitClient = new GitHubClient(new ProductHeaderValue("OpenKh.Tools.ModsManager"));
             var releases = await gitClient.Repository.Release.GetAll(
-                owner: "OpenKh",
+                owner: "shananas",
                 name: "OpenKh",
                 options: new ApiOptions
                 {
