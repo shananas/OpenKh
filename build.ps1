@@ -34,6 +34,13 @@ function Get-CSProjects([string]$filter) {
         if ( Test-Path -Path $csprojPath -PathType Leaf ) {
             Write-Output $csprojPath
         }
+        else {
+            # Some projects retain their public assembly name after moving to a platform-specific directory.
+            $projectFiles = @(Get-ChildItem -LiteralPath $_.FullName -Filter "*.csproj" -File)
+            if ($projectFiles.Count -eq 1) {
+                Write-Output $projectFiles[0].FullName
+            }
+        }
     }
 }
 
@@ -53,23 +60,24 @@ dotnet test --configuration $sourceConfiguration --verbosity $verbosity
 Test-Success $LASTEXITCODE
 
 # Create temporary solution
-dotnet new sln -n $solutionBase --force
+dotnet new sln -n $solutionBase --force --format sln
 Test-Success $LASTEXITCODE
 
 # Add items to solution
 Get-CSProjects "OpenKh.Command.*" | ForEach-Object {
-    dotnet sln $solution add $_
+    dotnet sln $solution add $_ --in-root --include-references false
+    Test-Success $LASTEXITCODE
 }
 Get-CSProjects "OpenKh.Tools.*" | ForEach-Object {
-    dotnet sln $solution add $_
+    dotnet sln $solution add $_ --in-root --include-references false
     Test-Success $LASTEXITCODE
 }
 Get-CSProjects "OpenKh.WinShell.*" | ForEach-Object {
-    dotnet sln $solution add $_
+    dotnet sln $solution add $_ --in-root --include-references false
     Test-Success $LASTEXITCODE
 }
 Get-CSProjects "OpenKh.Game*" | ForEach-Object {
-    dotnet sln $solution add $_
+    dotnet sln $solution add $_ --in-root --include-references false
     Test-Success $LASTEXITCODE
 }
 

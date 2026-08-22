@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenKh.Patcher\OpenKh.Patcher.csproj" />
+    <ProjectReference Include="..\OpenKh.Recom\OpenKh.Recom.csproj" />
+    <ProjectReference Include="..\XeEngine.Tools.Public\Xe.Tools\Xe.Tools.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\OpenKh.Tools.Common\ProcessStream.cs"
+             Link="Compatibility\ProcessStream.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+</Project>

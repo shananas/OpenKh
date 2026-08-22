@@ -16,9 +16,9 @@ jobs:
       with:
         submodules: recursive
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: pre-build.ps1
@@ -33,11 +33,15 @@ jobs:
     - name: msbuild panacea
       run: |
         msbuild OpenKh.Research.Panacea\OpenKh.Research.Panacea.vcxproj /p:Configuration=Release /p:Platform=x64
-        xcopy "OpenKh.Research.Panacea\Release\*.dll" bin\
-        xcopy "OpenKh.Research.Panacea\Dependencies\*.dll" bin\
+        xcopy /Y "OpenKh.Research.Panacea\Release\*.dll" bin\
+        xcopy /Y "OpenKh.Research.Panacea\Dependencies\*.dll" bin\
 
     - name: Organize release for mod users
       run: powershell -ExecutionPolicy Unrestricted ./.github/scripts/prepare-release.ps1
+      shell: pwsh
+
+    - name: Build Linux and Steam Deck release
+      run: powershell -ExecutionPolicy Unrestricted ./.github/scripts/prepare-linux-release.ps1
       shell: pwsh
 
     - name: create openkh-release
@@ -46,36 +50,89 @@ jobs:
         RELEASE_TAG: "release2-${{github.run_number}}"
       run: |
         echo $RELEASE_TAG > openkh/openkh-release
+        echo $RELEASE_TAG > openkh-linux-x64/openkh-release
 
-    - name: zip
-      uses: TheDoctor0/zip-release@0.6.2
-      with:
-        filename: openkh.zip
-        path: openkh
+    - name: Create Windows release archive
+      run: powershell -ExecutionPolicy Unrestricted ./.github/scripts/create-release-archive.ps1 -SourceDirectory openkh -DestinationPath openkh.zip
+      shell: pwsh
+
+    - name: Create Linux and Steam Deck release archive
+      run: powershell -ExecutionPolicy Unrestricted ./.github/scripts/create-release-archive.ps1 -SourceDirectory openkh-linux-x64 -DestinationPath openkh-linux-x64.zip
+      shell: pwsh
 
     - name: validate update archive
       shell: pwsh
       run: |
-        $archiveListing = (7z l openkh.zip) -join "`n"
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path "openkh.zip"))
+        try {
+          $archiveEntries = @($archive.Entries | ForEach-Object { $_.FullName })
+        }
+        finally {
+          $archive.Dispose()
+        }
         $requiredEntries = @(
-          "openkh\OpenKh.Launcher.exe",
-          "openkh\OpenKh.Tools.ModsManager.exe",
-          "openkh\Apps\OpenKh.Tools.ModsManager.exe"
+          "openkh/OpenKh.Launcher.exe",
+          "openkh/OpenKh.Tools.ModsManager.exe",
+          "openkh/Apps/OpenKh.Tools.ModsManager.exe"
         )
         foreach ($entry in $requiredEntries) {
-          if ($archiveListing -notmatch [regex]::Escape($entry)) {
+          if ($entry -notin $archiveEntries) {
             throw "Required update entry '$entry' is missing from openkh.zip."
           }
         }
         $obsoleteEntries = @(
-          "openkh\AdvancedTools",
-          "openkh\Apps\ModManager"
+          "openkh/AdvancedTools",
+          "openkh/Apps/ModManager"
         )
         foreach ($entry in $obsoleteEntries) {
-          if ($archiveListing -match [regex]::Escape($entry)) {
+          if ($archiveEntries | Where-Object { $_.StartsWith($entry, [System.StringComparison]::OrdinalIgnoreCase) }) {
             throw "Obsolete update entry '$entry' is present in openkh.zip."
           }
         }
+
+        $linuxArchive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path "openkh-linux-x64.zip"))
+        try {
+          $linuxArchiveEntries = @($linuxArchive.Entries | ForEach-Object { $_.FullName })
+        }
+        finally {
+          $linuxArchive.Dispose()
+        }
+        $linuxRequiredEntries = @(
+          "openkh-linux-x64/OpenKh.Launcher",
+          "openkh-linux-x64/Apps/OpenKh.Tools.ModsManager",
+          "openkh-linux-x64/Apps/OpenKH.Panacea.dll",
+          "openkh-linux-x64/Apps/avcodec-vgmstream-59.dll",
+          "openkh-linux-x64/Apps/avformat-vgmstream-59.dll",
+          "openkh-linux-x64/Apps/avutil-vgmstream-57.dll",
+          "openkh-linux-x64/Apps/bass.dll",
+          "openkh-linux-x64/Apps/bass_vgmstream.dll",
+          "openkh-linux-x64/Apps/libatrac9.dll",
+          "openkh-linux-x64/Apps/libcelt-0061.dll",
+          "openkh-linux-x64/Apps/libcelt-0110.dll",
+          "openkh-linux-x64/Apps/libg719_decode.dll",
+          "openkh-linux-x64/Apps/libmpg123-0.dll",
+          "openkh-linux-x64/Apps/libspeex-1.dll",
+          "openkh-linux-x64/Apps/libvorbis.dll",
+          "openkh-linux-x64/Apps/swresample-vgmstream-4.dll",
+          "openkh-linux-x64/install-openkh-linux.sh"
+        )
+        foreach ($entry in $linuxRequiredEntries) {
+          if ($entry -notin $linuxArchiveEntries) {
+            throw "Required Linux update entry '$entry' is missing from openkh-linux-x64.zip."
+          }
+        }
+        $invalidLinuxEntry = $linuxArchiveEntries | Where-Object { $_.Contains('\') } | Select-Object -First 1
+        if ($invalidLinuxEntry) {
+          throw "Linux archive entry '$invalidLinuxEntry' contains a Windows path separator."
+        }
+
+    - name: Upload Linux release layout
+      uses: actions/upload-artifact@v4
+      with:
+        name: openkh-linux-layout
+        path: openkh-linux-x64
+        if-no-files-found: error
 
     - name: "GitHub release latest"
       if: ${{ github.ref_name == 'master' }}
@@ -88,6 +145,7 @@ jobs:
         title: "OpenKh Latest Build"
         files: |
           openkh.zip
+          openkh-linux-x64.zip
 
     - name: "GitHub release numbered"
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -99,3 +157,85 @@ jobs:
         title: "OpenKh Build ${{github.run_number}} (${{github.ref_name}})"
         files: |
           openkh.zip
+          openkh-linux-x64.zip
+
+  appimage:
+    needs: build
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Linux release layout
+      uses: actions/download-artifact@v4
+      with:
+        name: openkh-linux-layout
+        path: openkh-linux-x64
+
+    - name: Install AppImage build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes \
+          imagemagick \
+          libfontconfig1 \
+          libfreetype6 \
+          libice6 \
+          libsm6 \
+          libx11-6 \
+          libx11-xcb1 \
+          libxcb1 \
+          xvfb
+
+    - name: Build AppImage
+      shell: bash
+      env:
+        RELEASE_TAG: release2-${{ github.run_number }}
+      run: |
+        sh ./.github/scripts/prepare-appimage.sh \
+          openkh-linux-x64 \
+          openkh-x86_64.AppImage \
+          "$RELEASE_TAG"
+
+    - name: Validate AppImage
+      shell: bash
+      run: |
+        ./openkh-x86_64.AppImage --appimage-version
+        ./openkh-x86_64.AppImage --appimage-extract >/dev/null
+        test -x squashfs-root/AppRun
+        test -x squashfs-root/usr/lib/openkh/OpenKh.Launcher
+        test -x squashfs-root/usr/lib/openkh/Apps/OpenKh.Tools.ModsManager
+        test -f squashfs-root/usr/lib/openkh/Apps/OpenKH.Panacea.dll
+        APPIMAGE_EXTRACT_AND_RUN=1 \
+          OPENKH_DATA_ROOT="$RUNNER_TEMP/openkh-appimage-test" \
+          xvfb-run -a sh -c '
+            "$1" &
+            app_pid=$!
+            sleep 5
+            if ! kill -0 "$app_pid" 2>/dev/null; then
+              wait "$app_pid" || true
+              echo "The AppImage launcher exited before the smoke test completed." >&2
+              exit 1
+            fi
+            kill "$app_pid"
+            wait "$app_pid" || true
+          ' sh ./openkh-x86_64.AppImage
+
+    - name: Upload AppImage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: openkh-appimage
+        path: openkh-x86_64.AppImage
+        if-no-files-found: error
+
+    - name: Add AppImage to latest release
+      if: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release upload latest openkh-x86_64.AppImage --clobber
+
+    - name: Add AppImage to numbered release
+      if: ${{ github.event_name == 'push' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+        RELEASE_TAG: release2-${{ github.run_number }}
+      run: gh release upload "$RELEASE_TAG" openkh-x86_64.AppImage --clobber
